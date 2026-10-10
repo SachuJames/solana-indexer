@@ -1,0 +1,12 @@
+{
+  "name": "solana-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["indexer", "api", "dashboard"],
+  "scripts": {
+    "dev:indexer": "npm run dev --workspace=indexer",
+    "dev:api": "npm run dev --workspace=api",
+    "dev:dashboard": "npm run dev --workspace=dashboard"
+  }
+}
