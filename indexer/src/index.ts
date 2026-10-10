@@ -128,7 +128,42 @@ async function subscribe(connection: Connection) {
   });
 }
 
+async function mockMode() {
+  console.log('mock mode: generating synthetic slots');
+  await initDb();
+  let slot = await getLastSlot();
+  if (slot === 0) slot = 300000000;
+  const programs = [
+    '11111111111111111111111111111111',
+    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    'ATokenGPvbdGVxr1b2hvZbsiqW5xWHoxbHoqjP',
+  ];
+  setInterval(async () => {
+    slot += 1;
+    const nTx = 1 + Math.floor(Math.random() * 5);
+    const txs: ParsedTx[] = [];
+    for (let i = 0; i < nTx; i++) {
+      const sig = 'mock' + slot + 'x' + i + Math.random().toString(36).slice(2, 10);
+      txs.push({
+        signature: sig, slot,
+        blockTime: Math.floor(Date.now() / 1000),
+        fee: 5000, success: Math.random() > 0.05,
+        programIds: [programs[Math.floor(Math.random() * programs.length)]],
+        accounts: Array.from({ length: 3 }, (_, k) => ({
+          pubkey: 'mockacct' + Math.floor(Math.random() * 100),
+          isSigner: k === 0, isWritable: k < 2,
+        })),
+      });
+    }
+    await storeSlot(slot, 'mockhash' + slot, Math.floor(Date.now() / 1000), txs);
+    await setLastSlot(slot);
+    console.log(`mock slot ${slot}: ${txs.length} txs`);
+  }, 2000);
+  setInterval(() => {}, 1 << 30);
+}
+
 async function main() {
+  if (process.env.MOCK === '1') return mockMode();
   await initDb();
   const connection = new Connection(RPC_URL, 'confirmed');
   const current = await connection.getSlot();
